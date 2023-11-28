@@ -1,17 +1,37 @@
-# 使用 Ubuntu 22.04 作为基础镜像
-FROM ubuntu:22.04
+FROM debian
 
-# 安装 Shellinabox
-RUN apt-get update && \
-    apt-get install -y shellinabox && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN dpkg --add-architecture i386
 
-# 设置 root 用户的密码为 'root'
-RUN echo 'root:frepai' | chpasswd
+RUN apt update
 
-# 暴露 22 端口
+RUN DEBIAN_FRONTEND=noninteractive apt install wine qemu-kvm *zenhei* xz-utils dbus-x11 curl firefox-esr gnome-system-monitor mate-system-monitor  git xfce4 xfce4-terminal tightvncserver wget   -y
+
+RUN wget https://github.com/novnc/noVNC/archive/refs/tags/v1.2.0.tar.gz
+
+RUN tar -xvf v1.2.0.tar.gz
+
+RUN mkdir  $HOME/.vnc
+
+RUN echo 'Sophia' | vncpasswd -f > $HOME/.vnc/passwd
+
+RUN echo '/bin/env  MOZ_FAKE_NO_SANDBOX=1  dbus-launch xfce4-session'  > $HOME/.vnc/xstartup
+
+RUN chmod 600 $HOME/.vnc/passwd
+
+RUN chmod 755 $HOME/.vnc/xstartup
+
+RUN echo 'whoami ' >>/Sophia.sh
+
+RUN echo 'cd ' >>/Sophia.sh
+
+RUN echo "su -l -c 'vncserver :2000 -geometry 1360x768' "  >>/Sophia.sh
+
+RUN echo 'cd /noVNC-1.2.0' >>/Sophia.sh
+
+RUN echo './utils/launch.sh  --vnc localhost:7900 --listen 8900 ' >>/Sophia.sh
+
+RUN chmod 755 /Sophia.sh
+
 EXPOSE 8900
 
-# 启动 Shellinabox
-CMD ["/usr/bin/shellinaboxd", "-t", "-s", "/:LOGIN"]
+CMD  /Sophia.sh
